@@ -45,7 +45,7 @@ def add_expense():
         try:
             amount = float(request.form.get('amount'))
         except:
-            return "❌ Invalid amount"
+            return "❌ Invald amount"
 
         note = request.form.get('note')
 

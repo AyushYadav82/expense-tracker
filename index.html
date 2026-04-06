@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --gold: #C9A84C;
+            --gold-light: #E8D5A3;
+            --gold-dim: #8A6F30;
+            --bg: #0D0F14;
+            --surface: #13161D;
+            --surface2: #1A1E28;
+            --border: rgba(201, 168, 76, 0.15);
+            --border-dim: rgba(255,255,255,0.06);
+            --text: #F0EDE6;
+            --text-muted: #7A7D8A;
+            --text-dim: #4A4D58;
+            --danger: #E05C5C;
+            --success: #5CBF8A;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* Background grid pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page {
+            position: relative;
+            z-index: 1;
+            max-width: 540px;
+            margin: 0 auto;
+            padding: 48px 24px 80px;
+        }
+
+        /* Header */
+        .header {
+            margin-bottom: 48px;
+            animation: fadeDown 0.6s ease both;
+        }
+
+        .header-label {
+            font-size: 11px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .header-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 42px;
+            font-weight: 300;
+            color: var(--text);
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+        }
+
+        .header-title span {
+            color: var(--gold);
+        }
+
+        /* Balance input card */
+        .balance-form {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            animation: fadeUp 0.6s 0.1s ease both;
+        }
+
+        .form-label {
+            font-size: 11px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 12px;
+            align-items: stretch;
+        }
+
+        .rupee-input {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            background: var(--surface2);
+            border: 1px solid var(--border-dim);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .rupee-input:focus-within {
+            border-color: var(--gold-dim);
+        }
+
+        .rupee-prefix {
+            padding: 0 14px;
+            color: var(--gold);
+            font-size: 18px;
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 400;
+            border-right: 1px solid var(--border-dim);
+        }
+
+        .rupee-input input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-size: 16px;
+            font-family: 'DM Sans', sans-serif;
+            padding: 14px 16px;
+        }
+
+        .rupee-input input::placeholder { color: var(--text-dim); }
+
+        .btn-primary {
+            background: var(--gold);
+            color: #0D0F14;
+            border: none;
+            border-radius: 10px;
+            padding: 14px 22px;
+            font-size: 13px;
+            font-weight: 500;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            white-space: nowrap;
+            letter-spacing: 0.02em;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn-primary:hover { background: var(--gold-light); }
+        .btn-primary:active { transform: scale(0.97); }
+
+        /* Stats grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+            animation: fadeUp 0.6s 0.2s ease both;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border-dim);
+            border-radius: 14px;
+            padding: 20px 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card.highlight {
+            border-color: var(--border);
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 2px;
+            background: var(--gold);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .stat-card.highlight::after { opacity: 1; }
+
+        .stat-label {
+            font-size: 10px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .stat-value {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 26px;
+            font-weight: 300;
+            color: var(--text);
+            line-height: 1;
+        }
+
+        .stat-value.danger { color: var(--danger); }
+        .stat-value.success { color: var(--success); }
+
+        .stat-currency {
+            font-size: 14px;
+            color: var(--gold);
+            margin-right: 2px;
+        }
+
+        /* Progress bar */
+        .progress-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border-dim);
+            border-radius: 14px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            animation: fadeUp 0.6s 0.3s ease both;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .progress-title {
+            font-size: 11px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .progress-pct {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 20px;
+            color: var(--gold);
+        }
+
+        .progress-track {
+            background: var(--surface2);
+            border-radius: 100px;
+            height: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 100px;
+            background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Actions */
+        .actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            animation: fadeUp 0.6s 0.4s ease both;
+        }
+
+        .action-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: var(--surface);
+            border: 1px solid var(--border-dim);
+            border-radius: 14px;
+            padding: 20px;
+            text-decoration: none;
+            color: var(--text);
+            transition: border-color 0.2s, background 0.2s, transform 0.15s;
+        }
+
+        .action-card:hover {
+            border-color: var(--border);
+            background: var(--surface2);
+            transform: translateY(-2px);
+        }
+
+        .action-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(201,168,76,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .action-icon svg { width: 18px; height: 18px; stroke: var(--gold); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+
+        .action-text strong {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .action-text small {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        @keyframes fadeDown {
+            from { opacity: 0; transform: translateY(-16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <div class="header">
+        <p class="header-label">Personal Finance</p>
+        <h1 class="header-title">Expense<br><span>Tracker</span></h1>
+    </div>
+
+    <div class="balance-form">
+        <label class="form-label">Set monthly budget</label>
+        <form action="/set_balance" method="post">
+            <div class="input-row">
+                <div class="rupee-input">
+                    <span class="rupee-prefix">₹</span>
+                    <input type="number" name="balance" placeholder="0.00" step="0.01">
+                </div>
+                <button type="submit" class="btn-primary">Set Budget</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card highlight">
+            <span class="stat-label">Budget</span>
+            <div class="stat-value">
+                <span class="stat-currency">₹</span>{{ balance }}
+            </div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Spent</span>
+            <div class="stat-value danger">
+                <span class="stat-currency">₹</span>{{ total }}
+            </div>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Left</span>
+            <div class="stat-value success">
+                <span class="stat-currency">₹</span>{{ remaining }}
+            </div>
+        </div>
+    </div>
+
+    {% if balance > 0 %}
+    <div class="progress-wrap">
+        <div class="progress-header">
+            <span class="progress-title">Budget used</span>
+            <span class="progress-pct">
+                {% if balance > 0 %}{{ "%.0f"|format(total / balance * 100) }}%{% else %}0%{% endif %}
+            </span>
+        </div>
+        <div class="progress-track">
+            <div class="progress-fill" style="width: {% if balance > 0 %}{{ [total / balance * 100, 100]|min }}{% else %}0{% endif %}%"></div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="actions">
+        <a href="/add" class="action-card">
+            <div class="action-icon">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            </div>
+            <div class="action-text">
+                <strong>Add Expense</strong>
+                <small>Log a transaction</small>
+            </div>
+        </a>
+        <a href="/expenses" class="action-card">
+            <div class="action-icon">
+                <svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/></svg>
+            </div>
+            <div class="action-text">
+                <strong>View All</strong>
+                <small>Browse expenses</small>
+            </div>
+        </a>
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expenses</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --gold: #C9A84C;
+            --gold-light: #E8D5A3;
+            --gold-dim: #8A6F30;
+            --bg: #0D0F14;
+            --surface: #13161D;
+            --surface2: #1A1E28;
+            --border: rgba(201, 168, 76, 0.15);
+            --border-dim: rgba(255,255,255,0.06);
+            --text: #F0EDE6;
+            --text-muted: #7A7D8A;
+            --text-dim: #4A4D58;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(201,168,76,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(201,168,76,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page {
+            position: relative;
+            z-index: 1;
+            max-width: 540px;
+            margin: 0 auto;
+            padding: 48px 24px 80px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+            margin-bottom: 40px;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: var(--gold); }
+        .back-link svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; }
+
+        .header {
+            margin-bottom: 36px;
+            animation: fadeDown 0.5s ease both;
+        }
+
+        .header-label {
+            font-size: 11px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 8px;
+        }
+
+        .header-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 38px;
+            font-weight: 300;
+            letter-spacing: -0.02em;
+        }
+
+        /* Filter bar */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            animation: fadeUp 0.5s 0.05s ease both;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border-dim);
+            border-radius: 100px;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .filter-btn.active {
+            background: rgba(201,168,76,0.1);
+            border-color: var(--gold-dim);
+            color: var(--gold);
+        }
+
+        .filter-btn:hover:not(.active) { border-color: var(--border); color: var(--text); }
+
+        /* Expense list */
+        .expense-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            animation: fadeUp 0.5s 0.1s ease both;
+        }
+
+        .expense-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: var(--surface);
+            border: 1px solid var(--border-dim);
+            border-radius: 14px;
+            padding: 18px 20px;
+            transition: border-color 0.2s, transform 0.15s;
+        }
+
+        .expense-item:hover {
+            border-color: var(--border);
+            transform: translateX(3px);
+        }
+
+        .expense-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            background: rgba(201,168,76,0.08);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 18px;
+        }
+
+        .expense-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .expense-category {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .expense-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .expense-meta .note {
+            color: var(--text-dim);
+        }
+
+        .expense-meta .sep {
+            margin: 0 6px;
+            color: var(--text-dim);
+        }
+
+        .expense-amount {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 22px;
+            font-weight: 400;
+            color: var(--text);
+            flex-shrink: 0;
+        }
+
+        .expense-amount span {
+            font-size: 13px;
+            color: var(--gold);
+            margin-right: 2px;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 64px 24px;
+            animation: fadeUp 0.5s 0.1s ease both;
+        }
+
+        .empty-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            background: var(--surface);
+            border: 1px solid var(--border-dim);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .empty-icon svg { width: 28px; height: 28px; stroke: var(--text-dim); fill: none; stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }
+
+        .empty-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 24px;
+            font-weight: 300;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .empty-sub {
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+
+        .total-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            margin-bottom: 20px;
+            animation: fadeUp 0.5s 0.08s ease both;
+        }
+
+        .total-label {
+            font-size: 11px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .total-amount {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 24px;
+            font-weight: 300;
+            color: var(--gold);
+        }
+
+        /* Category emoji map */
+        .cat-food::before { content: '🍜'; }
+        .cat-transport::before { content: '🚗'; }
+        .cat-shopping::before { content: '🛍'; }
+        .cat-health::before { content: '💊'; }
+        .cat-utilities::before { content: '⚡'; }
+        .cat-entertainment::before { content: '🎬'; }
+        .cat-default::before { content: '📌'; }
+
+        @keyframes fadeDown {
+            from { opacity: 0; transform: translateY(-12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <a href="/" class="back-link">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        Back to Dashboard
+    </a>
+
+    <div class="header">
+        <p class="header-label">Transaction History</p>
+        <h1 class="header-title">All Expenses</h1>
+    </div>
+
+    {% if expenses %}
+    <div class="total-bar">
+        <span class="total-label">Total spent</span>
+        <span class="total-amount">₹{{ expenses | sum(attribute='amount') | round(2) }}</span>
+    </div>
+
+    <div class="filter-bar" id="filterBar">
+        <button class="filter-btn active" onclick="filterCat('all', this)">All</button>
+        {% set seen = [] %}
+        {% for e in expenses %}
+            {% if e.category not in seen %}
+                {% if seen.append(e.category) %}{% endif %}
+                <button class="filter-btn" onclick="filterCat('{{ e.category|lower }}', this)">{{ e.category }}</button>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <div class="expense-list" id="expenseList">
+        {% for e in expenses | reverse %}
+        {% set cat_lower = e.category | lower %}
+        <div class="expense-item" data-category="{{ cat_lower }}">
+            <div class="expense-icon">
+                {% if 'food' in cat_lower or 'eat' in cat_lower or 'restaurant' in cat_lower %}🍜
+                {% elif 'transport' in cat_lower or 'travel' in cat_lower or 'cab' in cat_lower %}🚗
+                {% elif 'shop' in cat_lower or 'cloth' in cat_lower %}🛍️
+                {% elif 'health' in cat_lower or 'medic' in cat_lower or 'doctor' in cat_lower %}💊
+                {% elif 'util' in cat_lower or 'bill' in cat_lower or 'electric' in cat_lower %}⚡
+                {% elif 'entertain' in cat_lower or 'movie' in cat_lower or 'game' in cat_lower %}🎬
+                {% else %}📌{% endif %}
+            </div>
+            <div class="expense-body">
+                <div class="expense-category">{{ e.category }}</div>
+                <div class="expense-meta">
+                    <span>{{ e.time }}</span>
+                    {% if e.note %}
+                    <span class="sep">·</span>
+                    <span class="note">{{ e.note }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="expense-amount"><span>₹</span>{{ "%.2f"|format(e.amount) }}</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/></svg>
+        </div>
+        <p class="empty-title">No expenses yet</p>
+        <p class="empty-sub">Add your first transaction to get started</p>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+    function filterCat(cat, btn) {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.expense-item').forEach(item => {
+            item.style.display = (cat === 'all' || item.dataset.category === cat) ? 'flex' : 'none';
+        });
+    }
+</script>
+</body>
+</html>
